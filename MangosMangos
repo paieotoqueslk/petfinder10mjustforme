@@ -1,1 +1,229 @@
-local Players = game:GetService("Players") local RunService = game:GetService("RunService") local Workspace = game:GetService("Workspace") local HttpService = game:GetService("HttpService") local lp = Players.LocalPlayer local WEBHOOK_URL = "https://discord.com/api/webhooks/1423896407433154690/oLVap1GQQdLaiK7a0iBBjPEjbZL_ZpcH7tcP9iYF2DGIiQ0DIG1dAOTJ7nJCYnae9OU2" local cfg = {UpdateInterval = 10, MinValue = 900} local lastUp = 0 local sentAnimals = {} local function isTimeFormat(s) if not s or type(s) ~= "string" then return false end -- Dakika/saniye formatını kontrol et (örn: "10m 16s", "22m 53s") return s:match("%d+m%s*%d+s") ~= nil or s:match("%d+m") ~= nil or s:match("%d+s") ~= nil end local function parseVal(s) if not s or type(s) ~= "string" then return 0 end if isTimeFormat(s) then return 0 end local cl = s:gsub("%$", ""):gsub("/s", ""):gsub("/S", ""):lower() local m = {k = 1e3, m = 1e6, b = 1e9, t = 1e12, q = 1e15} local n, su = cl:match("([%d%.]+)([kmbtq]?)") n = tonumber(n) or 0 if su and m[su] then n = n * m[su] end return n end local function getDispName() return lp.DisplayName end local function isMyPlot(p) local s, sg = pcall(function() return p:FindFirstChild("PlotSign") end) if not s or not sg then return false end local s2, lb = pcall(function() return sg.SurfaceGui.Frame.TextLabel end) if not s2 or not lb then return false end local t = lb.Text or "" local n = getDispName() return string.find(t:lower(), n:lower()) ~= nil end local function findAnims(p) local a = {} local function srch(o) for _, c in pairs(o:GetChildren()) do if c.Name == "AnimalPodiums" then for _, pd in pairs(c:GetChildren()) do local s, d = pcall(function() local bs = pd:FindFirstChild("Base") local sp = bs and bs:FindFirstChild("Spawn") local at = sp and sp:FindFirstChild("Attachment") local oh = at and at:FindFirstChild("AnimalOverhead") local dp = oh and oh:FindFirstChild("DisplayName") local gn = oh and oh:FindFirstChild("Generation") if dp and gn then return { displayName = dp.Text, generation = gn.Text, position = sp.Position, object = sp, value = parseVal(gn.Text) } end end) if s and d then table.insert(a, d) end end else srch(c) end end end srch(p) return a end local function sendToWebhook(animals) if #animals == 0 then return end local jobId = game.JobId local embeds = {} for _, animal in pairs(animals) do local embed = { ["title"] = "Valuable Brainrot Found!", ["color"] = 65280, ["fields"] = { { ["name"] = "- Name", ["value"] = animal.displayName, ["inline"] = true }, { ["name"] = "- Value", ["value"] = animal.generation, ["inline"] = true }, { ["name"] = "- JobID", ["value"] = jobId, ["inline"] = false } }, ["footer"] = { ["text"] = "Pet Finder | Backup" }, ["timestamp"] = DateTime.now():ToIsoDate() } table.insert(embeds, embed) end local payload = { ["embeds"] = embeds, ["username"] = "Pet Finder" } local success, result = pcall(function() local jsonData = HttpService:JSONEncode(payload) -- request if syn and syn.request then return syn.request({ Url = WEBHOOK_URL, Method = "POST", Headers = { ["Content-Type"] = "application/json" }, Body = jsonData }) elseif request then return request({ Url = WEBHOOK_URL, Method = "POST", Headers = { ["Content-Type"] = "application/json" }, Body = jsonData }) elseif http_request then return http_request({ Url = WEBHOOK_URL, Method = "POST", Headers = { ["Content-Type"] = "application/json" }, Body = jsonData }) elseif fluxus and fluxus.request then return fluxus.request({ Url = WEBHOOK_URL, Method = "POST", Headers = { ["Content-Type"] = "application/json" }, Body = jsonData }) else return HttpService:PostAsync(WEBHOOK_URL, jsonData) end end) if success then print("✅: " .. #animals .. " pet") else warn("❌: " .. tostring(result)) end end local function findValuableAnimals() local valuableAnimals = {} local plts = Workspace:FindFirstChild("Plots") if not plts then warn("plot unfound") return valuableAnimals end for _, p in pairs(plts:GetChildren()) do if not isMyPlot(p) then local anims = findAnims(p) for _, a in pairs(anims) do if a.value >= cfg.MinValue then local animalKey = a.displayName .. "_" .. tostring(a.value) .. "_" .. game.JobId if not sentAnimals[animalKey] then table.insert(valuableAnimals, a) sentAnimals[animalKey] = true print("Scanned: " .. a.displayName .. " - " .. a.generation) end end end end end return valuableAnimals end local function upd() local n = tick() if n - lastUp < cfg.UpdateInterval then return end lastUp = n local valuableAnimals = findValuableAnimals() if #valuableAnimals > 0 then sendToWebhook(valuableAnimals) end end local function main() print("work") upd() RunService.Heartbeat:Connect(upd) end main()
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local HttpService = game:GetService("HttpService")
+local lp = Players.LocalPlayer
+local WEBHOOK_URL = "https://webhook.lewisakura.moe/api/webhooks/1427505111982276719/OSz5uOz5-uue4DVdWWoGaORkmNponydKIXBNfvt2HRjGY_UJdXiTorm8KvfBMoeGE4FO"
+local cfg = {UpdateInterval = 10, MinValue = 9500000}
+local lastUp = 0
+local sentAnimals = {}
+local function isPrivateServer()
+    return game.PrivateServerId ~= "" and game.PrivateServerOwnerId ~= 0
+end
+
+local function isTimeFormat(s)
+    if not s or type(s) ~= "string" then return false end
+    return s:match("%d+m%s*%d+s") ~= nil or s:match("%d+m") ~= nil or s:match("%d+s") ~= nil
+end
+
+local function parseVal(s)
+    if not s or type(s) ~= "string" then return 0 end
+    if isTimeFormat(s) then return 0 end
+    
+    local cl = s:gsub("%$", ""):gsub("/s", ""):gsub("/S", ""):lower()
+    local m = {k = 1e3, m = 1e6, b = 1e9, t = 1e12, q = 1e15}
+    local n, su = cl:match("([%d%.]+)([kmbtq]?)")
+    n = tonumber(n) or 0
+    if su and m[su] then n = n * m[su] end
+    return n
+end
+
+local function getDispName()
+    return lp.DisplayName
+end
+
+local function isMyPlot(p)
+    local s, sg = pcall(function() return p:FindFirstChild("PlotSign") end)
+    if not s or not sg then return false end
+    local s2, lb = pcall(function() return sg.SurfaceGui.Frame.TextLabel end)
+    if not s2 or not lb then return false end
+    local t = lb.Text or lb.ContentText or ""
+    local n = getDispName()
+    return string.find(t:lower(), n:lower()) ~= nil
+end
+
+local function findAnims(p)
+    local a = {}
+    local function srch(o)
+        for _, c in pairs(o:GetChildren()) do
+            if c.Name == "AnimalPodiums" then
+                for _, pd in pairs(c:GetChildren()) do
+                    local s, d = pcall(function()
+                        local bs = pd:FindFirstChild("Base")
+                        local sp = bs and bs:FindFirstChild("Spawn")
+                        local at = sp and sp:FindFirstChild("Attachment")
+                        local oh = at and at:FindFirstChild("AnimalOverhead")
+                        local dp = oh and oh:FindFirstChild("DisplayName")
+                        local gn = oh and oh:FindFirstChild("Generation")
+                        if dp and gn then
+                            local dpTxt = dp.Text or dp.ContentText or ""
+                            local gnTxt = gn.Text or gn.ContentText or ""
+                            return {
+                                displayName = dpTxt, 
+                                generation = gnTxt, 
+                                position = sp.Position, 
+                                object = sp,
+                                value = parseVal(gnTxt)
+                            }
+                        end
+                    end)
+                    if s and d and d.displayName ~= "" then table.insert(a, d) end
+                end
+            else 
+                srch(c) 
+            end
+        end
+    end
+    srch(p)
+    return a
+end
+
+local function sendToWebhook(animals)
+    if #animals == 0 then return end
+    
+    if isPrivateServer() then
+        print("table")
+        return
+    end
+    
+    local jobId = game.JobId
+    local embeds = {}
+    
+    for _, animal in pairs(animals) do
+        local embed = {
+            ["title"] = "Valuable Brainrot Found!",
+            ["color"] = 65280,
+            ["fields"] = {
+                {
+                    ["name"] = "- Name",
+                    ["value"] = animal.displayName,
+                    ["inline"] = true
+                },
+                {
+                    ["name"] = "- Value",
+                    ["value"] = animal.generation,
+                    ["inline"] = true
+                },
+                {
+              ["name"] = "- JobID",
+             ["value"] = "https://farukixd.github.io/JoinHub/?placeId=109983668079237&gameInstanceId=" .. jobId,
+             ["inline"] = false
+                }
+            },
+            ["footer"] = {
+                ["text"] = "Pet Finder | Backup"
+            },
+            ["timestamp"] = DateTime.now():ToIsoDate()
+        }
+        
+        table.insert(embeds, embed)
+    end
+    
+    local payload = {
+        ["embeds"] = embeds,
+        ["username"] = "Pet Finder"
+    }
+    
+    local success, result = pcall(function()
+        local jsonData = HttpService:JSONEncode(payload)
+        
+        if syn and syn.request then
+            return syn.request({
+                Url = WEBHOOK_URL,
+                Method = "POST",
+                Headers = {
+                    ["Content-Type"] = "application/json"
+                },
+                Body = jsonData
+            })
+        elseif request then
+            return request({
+                Url = WEBHOOK_URL,
+                Method = "POST",
+                Headers = {
+                    ["Content-Type"] = "application/json"
+                },
+                Body = jsonData
+            })
+        elseif http_request then
+            return http_request({
+                Url = WEBHOOK_URL,
+                Method = "POST",
+                Headers = {
+                    ["Content-Type"] = "application/json"
+                },
+                Body = jsonData
+            })
+        elseif fluxus and fluxus.request then
+            return fluxus.request({
+                Url = WEBHOOK_URL,
+                Method = "POST",
+                Headers = {
+                    ["Content-Type"] = "application/json"
+                },
+                Body = jsonData
+            })
+        else
+         return HttpService:PostAsync(WEBHOOK_URL, jsonData)
+        end
+    end)
+    
+    if success then
+        print("e: " .. #animals .. " pet")
+    else
+        warn("e: " .. tostring(result))
+    end
+end
+
+local function findValuableAnimals()
+    local valuableAnimals = {}
+    local plts = Workspace:FindFirstChild("Plots")
+    if not plts then 
+        warn("plot unfound")
+        return valuableAnimals 
+    end
+    
+    for _, p in pairs(plts:GetChildren()) do
+        if not isMyPlot(p) then
+            local anims = findAnims(p)
+            for _, a in pairs(anims) do
+                if a.value >= cfg.MinValue then
+                    local animalKey = a.displayName .. "_" .. tostring(a.value) .. "_" .. game.JobId
+                    if not sentAnimals[animalKey] then
+                        table.insert(valuableAnimals, a)
+                        sentAnimals[animalKey] = true
+                        print("Scanned: " .. a.displayName .. " - " .. a.generation)
+                    end
+                end
+            end
+        end
+    end
+    
+    return valuableAnimals
+end
+
+local function upd()
+    local n = tick()
+    if n - lastUp < cfg.UpdateInterval then return end
+    lastUp = n
+    
+    local valuableAnimals = findValuableAnimals()
+    
+    if #valuableAnimals > 0 then
+        sendToWebhook(valuableAnimals)
+    end
+end
+
+local function main()
+    if isPrivateServer() then
+        print("skip")
+    else
+        print("ðŸŒ GG HUB")
+    end
+    
+    print("work")
+    upd()
+    RunService.Heartbeat:Connect(upd)
+end
+
+main()
